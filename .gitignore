@@ -6,3 +6,5 @@
 *.dylib
 *.test
 go.work
+/src/tmp/
+.env

@@ -8,12 +8,13 @@ services:
     env_file:
       - .env
     ports:
-      - ${LOCAL_PORT}:1337
+      - ${LOCAL_PORT}:8000
     volumes:
       - ./src:/app
 
   db:
-    image: postgres:alpine
+    container_name: sales_db
+    image: postgres:15.2-alpine
     environment:
       - POSTGRES_USER=${DB_USER}
       - POSTGRES_PASSWORD=${DB_PASSWORD}
