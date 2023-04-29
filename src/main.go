@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"log"
 	"net/http"
 	"net/url"
@@ -11,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/jasmanchik/garage-sale/schema"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
 )
@@ -24,6 +26,27 @@ func main() {
 		log.Fatalf("main: unable to connect to database: %v", err)
 	}
 	defer db.Close()
+
+	flag.Parse()
+	log.Println(flag.Args())
+	if len(flag.Args()) > 0 {
+		switch flag.Args()[0] {
+		case "migrate":
+			if err := schema.Migrate(db); err != nil {
+				log.Fatalf("migrate applying error: %s", err)
+			} else {
+				log.Println("migration complete")
+			}
+			return
+		case "seed":
+			if err := schema.Seed(db); err != nil {
+				log.Fatalf("seeding error: %s", err)
+			} else {
+				log.Println("seeding complete")
+			}
+			return
+		}
+	}
 
 	api := http.Server{
 		Addr:         ":8000",
@@ -70,12 +93,12 @@ func openDB() (*sqlx.DB, error) {
 
 	u := url.URL{
 		Scheme:   "postgres",
-		User:     url.UserPassword("postgres", "postgres"),
-		Host:     "localhost",
-		Path:     "postgres",
+		User:     url.UserPassword(os.Getenv("DB_USER"), os.Getenv("DB_PASSWORD")),
+		Host:     os.Getenv("DB_HOST"),
+		Path:     os.Getenv("DB_NAME"),
 		RawQuery: q.Encode(),
 	}
-
+	log.Println(u.String())
 	return sqlx.Open("postgres", u.String())
 }
 
