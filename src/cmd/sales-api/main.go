@@ -13,9 +13,18 @@ import (
 	"github.com/ardanlabs/conf"
 	"github.com/jasmanchik/garage-sale/cmd/sales-api/internal/handlers"
 	"github.com/jasmanchik/garage-sale/internal/platform/database"
+	"github.com/pkg/errors"
 )
 
 func main() {
+	if err := run(); err != nil {
+		log.Fatal(err)
+	}
+}
+
+func run() error {
+	log := log.New(os.Stdout, "SALES : ", log.LstdFlags|log.Lmicroseconds|log.Lshortfile)
+
 	log.Printf("main: started")
 	defer log.Println("main: completed")
 
@@ -39,17 +48,17 @@ func main() {
 		if err == conf.ErrHelpWanted {
 			usage, err := conf.Usage("SALES", &cfg)
 			if err != nil {
-				log.Fatalf("main: generating config usage: %v", err)
+				errors.Wrap(err, "generating config usage")
 			}
 			fmt.Println(usage)
-			return
+			return nil
 		}
-		log.Fatalf("main: parsing config: %s", err)
+		errors.Wrap(err, "parsing config")
 	}
 
 	out, err := conf.String(&cfg)
 	if err != nil {
-		log.Fatalf("main: generating config for output: %v", err)
+		errors.Wrap(err, "generating config for output")
 	}
 	log.Printf("main: Config :\n%v\n", out)
 	db, err := database.Open(database.Config{
@@ -60,14 +69,13 @@ func main() {
 		DisableTLS: cfg.DB.DisableTLS,
 	})
 	if err != nil {
-		log.Fatalf("main: unable to connect to database: %v", err)
+		errors.Wrap(err, "unable to connect to database")
 	}
 	defer db.Close()
 
-	ps := handlers.Product{DB: db}
 	api := http.Server{
 		Addr:         cfg.Web.Address,
-		Handler:      http.HandlerFunc(ps.List),
+		Handler:      handlers.Routes(log, db),
 		ReadTimeout:  cfg.Web.ReadTimeout,
 		WriteTimeout: cfg.Web.WriteTimeout,
 	}
@@ -84,20 +92,22 @@ func main() {
 
 	select {
 	case err := <-serverErrors:
-		log.Fatalf("error: listening and serving %s", err)
+		errors.Wrap(err, "listening and serving")
 	case <-shutdown:
 		log.Println("main: Start shutdown")
-
 		ctx, cancel := context.WithTimeout(context.Background(), cfg.Web.ShutdownTime)
 		defer cancel()
 
 		err := api.Shutdown(ctx)
 		if err != nil {
 			log.Printf("main : Graceful shutdown did not complete in %v : %v", cfg.Web.ShutdownTime, err)
-			err := api.Close()
-			if err != nil {
-				log.Fatalf("main: could not stop server gracefully : %v", err)
-			}
+			err = api.Close()
+		}
+
+		if err != nil {
+			errors.Wrap(err, "graceful shutdown")
 		}
 	}
+
+	return nil
 }
