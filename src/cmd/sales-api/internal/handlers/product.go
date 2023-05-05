@@ -9,6 +9,7 @@ import (
 	"github.com/jasmanchik/garage-sale/internal/platform/web"
 	"github.com/jasmanchik/garage-sale/internal/product"
 	"github.com/jmoiron/sqlx"
+	"github.com/pkg/errors"
 )
 
 type Product struct {
@@ -16,7 +17,7 @@ type Product struct {
 	Log *log.Logger
 }
 
-func (p *Product) List(w http.ResponseWriter, r *http.Request) error {
+func (p *Product) List(w http.ResponseWriter, _ *http.Request) error {
 
 	list, err := product.List(p.DB)
 	if err != nil {
@@ -30,7 +31,14 @@ func (p *Product) Retrieve(w http.ResponseWriter, r *http.Request) error {
 
 	list, err := product.Retrieve(p.DB, id)
 	if err != nil {
-		return err
+		switch err {
+		case product.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		case product.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		default:
+			return errors.Wrapf(err, "looking for product %q", id)
+		}
 	}
 	return web.Response(w, list, http.StatusOK)
 }

@@ -8,6 +8,12 @@ import (
 	"github.com/pkg/errors"
 )
 
+// Predefined errors for known failure scenarios
+var (
+	ErrNotFound  = errors.New("product not found")
+	ErrInvalidID = errors.New("id provided was not a valid UUID")
+)
+
 func List(db *sqlx.DB) ([]Product, error) {
 	list := make([]Product, 0)
 	q := "SELECT product_id, name, cost, quantity, date_created, date_updated FROM products"
@@ -18,10 +24,15 @@ func List(db *sqlx.DB) ([]Product, error) {
 }
 
 func Retrieve(db *sqlx.DB, id string) (*Product, error) {
+
+	if _, err := uuid.Parse(id); err != nil {
+		return nil, ErrInvalidID
+	}
+
 	p := Product{}
 	q := "SELECT product_id, name, cost, quantity, date_created, date_updated FROM products WHERE product_id = $1"
 	if err := db.Get(&p, q, id); err != nil {
-		return nil, err
+		return nil, ErrNotFound
 	}
 	return &p, nil
 }
