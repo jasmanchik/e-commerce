@@ -12,3 +12,9 @@ type Product struct {
 	DateCreated time.Time `json:"date_created" db:"date_created"`
 	DateUpdated time.Time `json:"date_updated" db:"date_updated"`
 }
+
+type NewProduct struct {
+	Name     string `json:"name" validate:"required"`
+	Cost     int    `json:"cost" validate:"required,gt=0"`
+	Quantity int    `json:"quantity" validate:"required,gt=0"`
+}

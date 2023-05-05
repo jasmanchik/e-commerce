@@ -1,11 +1,12 @@
 package handlers
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/go-chi/chi"
+	"github.com/jasmanchik/garage-sale/internal/platform/web"
 	"github.com/jasmanchik/garage-sale/internal/product"
 	"github.com/jmoiron/sqlx"
 )
@@ -15,47 +16,33 @@ type Product struct {
 	Log *log.Logger
 }
 
-func (p *Product) List(w http.ResponseWriter, r *http.Request) {
+func (p *Product) List(w http.ResponseWriter, r *http.Request) error {
 
 	list, err := product.List(p.DB)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		p.Log.Printf("ListProducts: error marshalling data: %s", err)
-		return
+		return err
 	}
-	data, err := json.Marshal(list)
-
-	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		p.Log.Printf("ListProducts: error marshalling data: %s", err)
-		return
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		p.Log.Printf("ListProducts: write response: %s", err)
-	}
+	return web.Response(w, list, http.StatusOK)
 }
 
-func (p *Product) Retrieve(w http.ResponseWriter, r *http.Request) {
+func (p *Product) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
 	list, err := product.Retrieve(p.DB, id)
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		p.Log.Printf("ListProducts: error marshalling data: %s", err)
-		return
+		return err
 	}
-	data, err := json.Marshal(list)
+	return web.Response(w, list, http.StatusOK)
+}
 
+func (p *Product) Create(w http.ResponseWriter, r *http.Request) error {
+	var np product.NewProduct
+	if err := web.Decode(r, &np); err != nil {
+		return err
+	}
+	prod, err := product.Create(p.DB, &np, time.Now())
 	if err != nil {
-		w.WriteHeader(http.StatusInternalServerError)
-		p.Log.Printf("ListProducts: error marshalling data: %s", err)
-		return
+		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write(data); err != nil {
-		p.Log.Printf("ListProducts: write response: %s", err)
-	}
+	return web.Response(w, prod, http.StatusCreated)
 }
