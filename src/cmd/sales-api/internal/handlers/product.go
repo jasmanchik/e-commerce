@@ -17,9 +17,8 @@ type Product struct {
 	Log *log.Logger
 }
 
-func (p *Product) List(w http.ResponseWriter, _ *http.Request) error {
-
-	list, err := product.List(p.DB)
+func (p *Product) List(w http.ResponseWriter, r *http.Request) error {
+	list, err := product.List(r.Context(), p.DB)
 	if err != nil {
 		return err
 	}
@@ -29,7 +28,7 @@ func (p *Product) List(w http.ResponseWriter, _ *http.Request) error {
 func (p *Product) Retrieve(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	list, err := product.Retrieve(p.DB, id)
+	list, err := product.Retrieve(r.Context(), p.DB, id)
 	if err != nil {
 		switch err {
 		case product.ErrInvalidID:
@@ -48,7 +47,7 @@ func (p *Product) Create(w http.ResponseWriter, r *http.Request) error {
 	if err := web.Decode(r, &np); err != nil {
 		return err
 	}
-	prod, err := product.Create(p.DB, &np, time.Now())
+	prod, err := product.Create(r.Context(), p.DB, &np, time.Now())
 	if err != nil {
 		return err
 	}
@@ -58,7 +57,7 @@ func (p *Product) Create(w http.ResponseWriter, r *http.Request) error {
 func (p *Product) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	pr, err := product.Retrieve(p.DB, id)
+	pr, err := product.Retrieve(r.Context(), p.DB, id)
 	if err != nil {
 		err := errors.Wrapf(err, "can not fetch exists product by id %s", id)
 		if err != nil {
@@ -67,7 +66,7 @@ func (p *Product) Delete(w http.ResponseWriter, r *http.Request) error {
 		return web.NewRequestError(err, http.StatusNotFound)
 	}
 
-	err = product.Delete(p.DB, pr)
+	err = product.Delete(r.Context(), p.DB, pr)
 	if err != nil {
 		err := errors.Wrapf(err, "can not delete product %v", pr)
 		if err != nil {
@@ -76,7 +75,7 @@ func (p *Product) Delete(w http.ResponseWriter, r *http.Request) error {
 		return web.NewRequestError(err, http.StatusInternalServerError)
 	}
 
-	list, err := product.List(p.DB)
+	list, err := product.List(r.Context(), p.DB)
 	if err != nil {
 		return err
 	}
