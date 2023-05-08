@@ -102,6 +102,27 @@ func (pt *ProductTests) ProductCRUD(t *testing.T) {
 			t.Fatalf("item from DB is not the same as I created: %s", diff)
 		}
 	}
+
+	// Delete by id
+	{
+		endpoint := fmt.Sprintf("/v1/products/%s", created["id"])
+		req := httptest.NewRequest(http.MethodDelete, endpoint, nil)
+		req.Header.Set("Content-Type", "application/json")
+		resp := httptest.NewRecorder()
+
+		pt.app.ServeHTTP(resp, req)
+
+		if http.StatusOK != resp.Code {
+			t.Fatalf("deleting item http status is not correct. Exp: %d, Got: %d", http.StatusOK, resp.Code)
+		}
+
+		req = httptest.NewRequest(http.MethodGet, endpoint, nil)
+		resp = httptest.NewRecorder()
+		pt.app.ServeHTTP(resp, req)
+		if resp.Code != http.StatusNotFound {
+			t.Fatalf("getting item after delete http status is not correct. Exp: %d, Got: %d", http.StatusOK, resp.Code)
+		}
+	}
 }
 
 func (pt *ProductTests) List(t *testing.T) {
