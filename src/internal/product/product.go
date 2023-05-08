@@ -53,3 +53,12 @@ func Create(db *sqlx.DB, np *NewProduct, now time.Time) (*Product, error) {
 	}
 	return &p, nil
 }
+
+func Delete(db *sqlx.DB, p *Product) error {
+	const q = "DELETE FROM products WHERE product_id=$1"
+	_, err := db.Exec(q, p.ID)
+	if err != nil {
+		return errors.Wrapf(err, "deleting product: %v", err)
+	}
+	return nil
+}

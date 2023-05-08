@@ -54,3 +54,31 @@ func (p *Product) Create(w http.ResponseWriter, r *http.Request) error {
 	}
 	return web.Response(w, prod, http.StatusCreated)
 }
+
+func (p *Product) Delete(w http.ResponseWriter, r *http.Request) error {
+	id := chi.URLParam(r, "id")
+
+	pr, err := product.Retrieve(p.DB, id)
+	if err != nil {
+		err := errors.Wrapf(err, "can not fetch exists product by id %s", id)
+		if err != nil {
+			return err
+		}
+		return web.NewRequestError(err, http.StatusNotFound)
+	}
+
+	err = product.Delete(p.DB, pr)
+	if err != nil {
+		err := errors.Wrapf(err, "can not delete product %v", pr)
+		if err != nil {
+			return err
+		}
+		return web.NewRequestError(err, http.StatusInternalServerError)
+	}
+
+	list, err := product.List(p.DB)
+	if err != nil {
+		return err
+	}
+	return web.Response(w, list, http.StatusOK)
+}
