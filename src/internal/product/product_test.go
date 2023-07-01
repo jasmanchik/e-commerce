@@ -1,6 +1,7 @@
 package product_test
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -14,6 +15,8 @@ func TestProducts(t *testing.T) {
 	db, cleanup := databasetest.Setup(t)
 	defer cleanup()
 
+	ctx := context.Background()
+
 	np := product.NewProduct{
 		Name:     "Comic Book",
 		Cost:     10,
@@ -22,12 +25,12 @@ func TestProducts(t *testing.T) {
 
 	d := time.Date(2021, time.January, 1, 0, 0, 0, 0, time.UTC)
 
-	p, err := product.Create(db, &np, d)
+	p, err := product.Create(ctx, db, &np, d)
 	if err != nil {
 		t.Fatalf("can not create product: %+v", err)
 	}
 
-	saved, err := product.Retrieve(db, p.ID)
+	saved, err := product.Retrieve(ctx, db, p.ID)
 	if err != nil {
 		t.Fatalf("can not retrieve product: %+v", err)
 	}
@@ -36,7 +39,7 @@ func TestProducts(t *testing.T) {
 		t.Fatalf("saved product does not match: %v != %v", p, saved)
 	}
 
-	pl, err := product.List(db)
+	pl, err := product.List(ctx, db)
 	if err != nil {
 		t.Fatalf("can not get list of products: %+v", err)
 	}
@@ -55,12 +58,13 @@ func TestProducts(t *testing.T) {
 func TestProductList(t *testing.T) {
 	db, cleanup := databasetest.Setup(t)
 	defer cleanup()
+	ctx := context.Background()
 
 	if err := schema.Seed(db); err != nil {
 		t.Fatalf("can not seed database: %+v", err)
 	}
 
-	pl, err := product.List(db)
+	pl, err := product.List(ctx, db)
 	if err != nil {
 		t.Fatalf("can not get list of products: %+v", err)
 	}

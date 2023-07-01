@@ -43,7 +43,7 @@ func (pt *ProductTests) ProductCRUD(t *testing.T) {
 	{
 		body := strings.NewReader(`{"name": "product0", "cost": 55, "quantity": 6}`)
 
-		req := httptest.NewRequest(http.MethodPost, "/v1/products", body)
+		req := httptest.NewRequest(http.MethodPost, "/api/products", body)
 		req.Header.Set("Content-Type", "application/json")
 		resp := httptest.NewRecorder()
 
@@ -82,7 +82,7 @@ func (pt *ProductTests) ProductCRUD(t *testing.T) {
 
 	// Get by id
 	{
-		endpoint := fmt.Sprintf("/v1/products/%s", created["id"])
+		endpoint := fmt.Sprintf("/api/products/%s", created["id"])
 		req := httptest.NewRequest(http.MethodGet, endpoint, nil)
 		req.Header.Set("Content-Type", "application/json")
 		resp := httptest.NewRecorder()
@@ -105,7 +105,7 @@ func (pt *ProductTests) ProductCRUD(t *testing.T) {
 
 	// Delete by id
 	{
-		endpoint := fmt.Sprintf("/v1/products/%s", created["id"])
+		endpoint := fmt.Sprintf("/api/products/%s", created["id"])
 		req := httptest.NewRequest(http.MethodDelete, endpoint, nil)
 		req.Header.Set("Content-Type", "application/json")
 		resp := httptest.NewRecorder()
@@ -126,7 +126,7 @@ func (pt *ProductTests) ProductCRUD(t *testing.T) {
 }
 
 func (pt *ProductTests) List(t *testing.T) {
-	req := httptest.NewRequest(http.MethodGet, "/v1/products", nil)
+	req := httptest.NewRequest(http.MethodGet, "/api/products", nil)
 	resp := httptest.NewRecorder()
 
 	pt.app.ServeHTTP(resp, req)
