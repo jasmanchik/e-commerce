@@ -22,15 +22,24 @@ func Response(w http.ResponseWriter, data interface{}, statusCode int) error {
 
 // RespondError ResponseError know how to handle errors going out to the client.
 func RespondError(w http.ResponseWriter, err error) error {
-	if errWeb, ok := err.(*Error); ok {
-		resp := ErrorResponse{
-			Error: errWeb.Err.Error(),
+	if errWeb, ok := errors.Cause(err).(*Error); ok {
+		er := ErrorResponse{
+			Error:  errWeb.Err.Error(),
+			Fields: errWeb.Fields,
 		}
-		return Response(w, resp, errWeb.Code)
+		if err := Response(w, er, errWeb.Status); err != nil {
+			return err
+		}
+		return nil
 	}
 
-	resp := ErrorResponse{
+	er := ErrorResponse{
 		Error: http.StatusText(http.StatusInternalServerError),
 	}
-	return Response(w, resp, http.StatusInternalServerError)
+
+	if err := Response(w, er, http.StatusInternalServerError); err != nil {
+		return err
+	}
+
+	return nil
 }

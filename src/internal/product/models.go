@@ -17,8 +17,8 @@ type Product struct {
 
 type NewProduct struct {
 	Name     string `json:"name" validate:"required"`
-	Cost     int    `json:"cost" validate:"required,gt=0"`
-	Quantity int    `json:"quantity" validate:"required,gt=0"`
+	Cost     int    `json:"cost" validate:"gt=0"`
+	Quantity int    `json:"quantity" validate:"gt=0"`
 }
 
 type Sale struct {
@@ -30,6 +30,6 @@ type Sale struct {
 }
 
 type NewSale struct {
-	Quantity int `json:"quantity"`
+	Quantity int `json:"quantity" validation:"gt=0"`
 	Paid     int `json:"paid"`
 }
