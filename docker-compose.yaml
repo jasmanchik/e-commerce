@@ -2,22 +2,22 @@ version: '3.8'
 
 services:
 
-  web:
-    build:
-        context: .
-        dockerfile: Dockerfile
-        args:
-          - args=${args}
-    env_file:
-      - .env
-    restart: on-failure
-    ports:
-      - ${LOCAL_PORT}:8000
-    volumes:
-      - ./src:/app
-    depends_on:
-        - db
-    command: "air --build.cmd 'go build -o ./tmp/main ./cmd/sales-api' --build.bin 'tmp/main' --build.args_bin '${args}'"
+#  web:
+#    build:
+#        context: .
+#        dockerfile: Dockerfile
+#        args:
+#          - args=${args}
+#    env_file:
+#      - .env
+#    restart: on-failure
+#    ports:
+#      - ${LOCAL_PORT}:8000
+#    volumes:
+#      - ./src:/app
+#    depends_on:
+#        - db
+#    command: "air --build.cmd 'go build -o ./tmp/main ./cmd/sales-api' --build.bin 'tmp/main' --build.args_bin '${args}'"
 
   db:
     container_name: sales_db

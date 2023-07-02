@@ -18,5 +18,8 @@ func Routes(logger *log.Logger, db *sqlx.DB) http.Handler {
 	app.Handle(http.MethodGet, "/api/products/{id}", p.Retrieve)
 	app.Handle(http.MethodDelete, "/api/products/{id}", p.Delete)
 
+	app.Handle(http.MethodPost, "/api/products/{id}/sales", p.AddSale)
+	app.Handle(http.MethodGet, "/api/products/{id}/sales", p.ListSale)
+
 	return app
 }

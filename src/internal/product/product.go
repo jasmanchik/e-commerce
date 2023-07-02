@@ -17,7 +17,11 @@ var (
 
 func List(ctx context.Context, db *sqlx.DB) ([]Product, error) {
 	list := make([]Product, 0)
-	q := "SELECT product_id, name, cost, quantity, date_created, date_updated FROM products"
+	q := `SELECT 
+			p.product_id, p.name, p.cost, p.quantity, p.date_created, p.date_updated, 
+			COALESCE(SUM(s.quantity), 0) as sold, COALESCE(SUM(s.paid), 0) as revenue 
+			FROM products AS p LEFT JOIN sales AS s ON p.product_id = s.product_id 
+			GROUP BY p.product_id`
 	if err := db.SelectContext(ctx, &list, q); err != nil {
 		return nil, err
 	}
@@ -31,7 +35,14 @@ func Retrieve(ctx context.Context, db *sqlx.DB, id string) (*Product, error) {
 	}
 
 	p := Product{}
-	q := "SELECT product_id, name, cost, quantity, date_created, date_updated FROM products WHERE product_id = $1"
+	q := `SELECT 
+    		p.*, 
+			COALESCE(SUM(s.quantity), 0) as sold, 
+			COALESCE(SUM(s.paid), 0) as revenue 
+		FROM products AS p 
+		LEFT JOIN sales AS s ON p.product_id = s.product_id 
+		WHERE p.product_id = $1
+		GROUP BY p.product_id`
 	if err := db.GetContext(ctx, &p, q, id); err != nil {
 		return nil, ErrNotFound
 	}
@@ -47,7 +58,7 @@ func Create(ctx context.Context, db *sqlx.DB, np *NewProduct, now time.Time) (*P
 		DateCreated: now.UTC(),
 		DateUpdated: now.UTC(),
 	}
-	const q = "INSERT INTO products (product_id, name, cost, quantity, date_created, date_updated) VALUES ($1, $2, $3, $4, $5, $6)"
+	const q = `INSERT INTO products (product_id, name, cost, quantity, date_created, date_updated) VALUES ($1, $2, $3, $4, $5, $6)`
 	_, err := db.ExecContext(ctx, q, p.ID, p.Name, p.Cost, p.Quantity, p.DateCreated, p.DateUpdated)
 	if err != nil {
 		return nil, errors.Wrapf(err, "inserting product: %v", np)
@@ -56,7 +67,7 @@ func Create(ctx context.Context, db *sqlx.DB, np *NewProduct, now time.Time) (*P
 }
 
 func Delete(ctx context.Context, db *sqlx.DB, p *Product) error {
-	const q = "DELETE FROM products WHERE product_id=$1"
+	const q = `DELETE FROM products WHERE product_id=$1`
 	_, err := db.ExecContext(ctx, q, p.ID)
 	if err != nil {
 		return errors.Wrapf(err, "deleting product: %v", err)

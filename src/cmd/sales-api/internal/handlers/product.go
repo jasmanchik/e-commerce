@@ -81,3 +81,31 @@ func (p *Product) Delete(w http.ResponseWriter, r *http.Request) error {
 	}
 	return web.Response(w, list, http.StatusOK)
 }
+
+func (p *Product) AddSale(w http.ResponseWriter, r *http.Request) error {
+	var ns product.NewSale
+
+	if err := web.Decode(r, &ns); err != nil {
+		return errors.Wrapf(err, "decoding new sale")
+	}
+
+	productID := chi.URLParam(r, "id")
+
+	sale, err := product.AddSale(r.Context(), p.DB, ns, productID, time.Now())
+	if err != nil {
+		return errors.Wrapf(err, "adding new sale")
+	}
+
+	return web.Response(w, sale, http.StatusCreated)
+}
+
+func (p *Product) ListSale(w http.ResponseWriter, r *http.Request) error {
+	id := chi.URLParam(r, "id")
+
+	list, err := product.ListSales(r.Context(), p.DB, id)
+	if err != nil {
+		return errors.Wrapf(err, "getting sale list")
+	}
+
+	return web.Response(w, list, http.StatusOK)
+}
