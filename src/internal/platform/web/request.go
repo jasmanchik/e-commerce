@@ -54,7 +54,6 @@ func Decode(r *http.Request, val interface{}) error {
 		}
 
 		lang, _ := translator.GetTranslator("en")
-
 		var fields []FieldError
 		for _, verror := range vErrors {
 			field := FieldError{

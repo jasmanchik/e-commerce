@@ -33,3 +33,9 @@ type NewSale struct {
 	Quantity int `json:"quantity" validation:"gt=0"`
 	Paid     int `json:"paid"`
 }
+
+type UpdateProduct struct {
+	Name     *string `json:"name"`
+	Cost     *int    `json:"cost" validate:"omitempty,gt=0"`
+	Quantity *int    `json:"quantity" validate:"omitempty,gt=0"`
+}

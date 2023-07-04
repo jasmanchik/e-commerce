@@ -74,3 +74,29 @@ func Delete(ctx context.Context, db *sqlx.DB, p *Product) error {
 	}
 	return nil
 }
+
+func Update(ctx context.Context, db *sqlx.DB, id string, update UpdateProduct, now time.Time) error {
+	p, err := Retrieve(ctx, db, id)
+	if err != nil {
+		return errors.Wrapf(err, "Can not find product with id %s", id)
+	}
+
+	if update.Name != nil {
+		p.Name = *update.Name
+	}
+	if update.Cost != nil {
+		p.Cost = *update.Cost
+	}
+	if update.Quantity != nil {
+		p.Quantity = *update.Quantity
+	}
+
+	p.DateUpdated = now
+
+	const q = `UPDATE products SET "name"=$2, "cost"=$3, "quantity"=$4, "date_updated"=$5 WHERE product_id=$1`
+	_, err = db.ExecContext(ctx, q, p.ID, p.Name, p.Cost, p.Quantity, p.DateUpdated)
+	if err != nil {
+		return errors.Wrapf(err, "updating product: %v", err)
+	}
+	return nil
+}

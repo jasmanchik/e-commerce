@@ -109,3 +109,25 @@ func (p *Product) ListSale(w http.ResponseWriter, r *http.Request) error {
 
 	return web.Response(w, list, http.StatusOK)
 }
+
+func (p *Product) Update(w http.ResponseWriter, r *http.Request) error {
+	pid := chi.URLParam(r, "id")
+
+	var update product.UpdateProduct
+	if err := web.Decode(r, &update); err != nil {
+		return errors.Wrap(err, "decoding product update")
+	}
+
+	if err := product.Update(r.Context(), p.DB, pid, update, time.Now()); err != nil {
+		switch err {
+		case product.ErrNotFound:
+			return web.NewRequestError(err, http.StatusNotFound)
+		case product.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusBadRequest)
+		default:
+			return errors.Wrapf(err, "updating product %q", pid)
+		}
+	}
+
+	return web.Response(w, nil, http.StatusNoContent)
+}

@@ -8,6 +8,12 @@ import (
 )
 
 func Response(w http.ResponseWriter, data interface{}, statusCode int) error {
+
+	if statusCode == http.StatusNoContent {
+		w.WriteHeader(statusCode)
+		return nil
+	}
+
 	jsonData, err := json.Marshal(data)
 	if err != nil {
 		return errors.Wrapf(err, "marshalling data: %v", data)
