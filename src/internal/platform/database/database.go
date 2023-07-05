@@ -1,6 +1,7 @@
 package database
 
 import (
+	"context"
 	"net/url"
 
 	"github.com/jmoiron/sqlx"
@@ -31,4 +32,10 @@ func Open(cfg Config) (*sqlx.DB, error) {
 		RawQuery: q.Encode(),
 	}
 	return sqlx.Open("postgres", u.String())
+}
+
+func StatusCheck(ctx context.Context, db *sqlx.DB) error {
+	const q = `SELECT true`
+	var tmp bool
+	return db.QueryRowContext(ctx, q).Scan(&tmp)
 }
