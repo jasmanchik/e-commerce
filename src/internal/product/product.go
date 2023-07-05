@@ -66,9 +66,13 @@ func Create(ctx context.Context, db *sqlx.DB, np *NewProduct, now time.Time) (*P
 	return &p, nil
 }
 
-func Delete(ctx context.Context, db *sqlx.DB, p *Product) error {
+func Delete(ctx context.Context, db *sqlx.DB, id string) error {
+	if _, err := uuid.Parse(id); err != nil {
+		return ErrInvalidID
+	}
+
 	const q = `DELETE FROM products WHERE product_id=$1`
-	_, err := db.ExecContext(ctx, q, p.ID)
+	_, err := db.ExecContext(ctx, q, id)
 	if err != nil {
 		return errors.Wrapf(err, "deleting product: %v", err)
 	}

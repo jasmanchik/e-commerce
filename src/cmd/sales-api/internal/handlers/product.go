@@ -57,29 +57,16 @@ func (p *Product) Create(w http.ResponseWriter, r *http.Request) error {
 func (p *Product) Delete(w http.ResponseWriter, r *http.Request) error {
 	id := chi.URLParam(r, "id")
 
-	pr, err := product.Retrieve(r.Context(), p.DB, id)
-	if err != nil {
-		err := errors.Wrapf(err, "can not fetch exists product by id %s", id)
-		if err != nil {
-			return err
+	if err := product.Delete(r.Context(), p.DB, id); err != nil {
+		switch err {
+		case product.ErrInvalidID:
+			return web.NewRequestError(err, http.StatusNotFound)
+		default:
+			return errors.Wrapf(err, "deleting product %q", id)
 		}
-		return web.NewRequestError(err, http.StatusNotFound)
 	}
 
-	err = product.Delete(r.Context(), p.DB, pr)
-	if err != nil {
-		err := errors.Wrapf(err, "can not delete product %v", pr)
-		if err != nil {
-			return err
-		}
-		return web.NewRequestError(err, http.StatusInternalServerError)
-	}
-
-	list, err := product.List(r.Context(), p.DB)
-	if err != nil {
-		return err
-	}
-	return web.Response(w, list, http.StatusOK)
+	return web.Response(w, nil, http.StatusNoContent)
 }
 
 func (p *Product) AddSale(w http.ResponseWriter, r *http.Request) error {
