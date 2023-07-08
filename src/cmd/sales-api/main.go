@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	_ "net/http/pprof" //register the /debug/pprof handlers
 	"os"
 	"os/signal"
 	"syscall"
@@ -30,7 +31,8 @@ func run() error {
 
 	var cfg struct {
 		Web struct {
-			Address      string        `conf:"default::8000"`
+			Address      string        `conf:"default:localhost:8000"`
+			Debug        string        `conf:"default:localhost:6060"`
 			ReadTimeout  time.Duration `conf:"default:5s"`
 			WriteTimeout time.Duration `conf:"default:5s"`
 			ShutdownTime time.Duration `conf:"default:5s"`
@@ -72,6 +74,12 @@ func run() error {
 		errors.Wrap(err, "unable to connect to database")
 	}
 	defer db.Close()
+
+	go func() {
+		log.Printf("main: debug service listening on %s", cfg.Web.Debug)
+		err := http.ListenAndServe(cfg.Web.Debug, http.DefaultServeMux)
+		log.Printf("main: debug service ended %v", err)
+	}()
 
 	api := http.Server{
 		Addr:         cfg.Web.Address,
